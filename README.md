@@ -7,7 +7,7 @@ Create amazing QR Codes
 
 ### Full example
 
-```http
+```
 <?php
 
 require_once('UnicQR.php');
@@ -33,8 +33,13 @@ file_put_contents('qr.svg', $svg);
 ```
 
 ### Options
-
-```http
+By increasing the capacity, the pixel density increases and the readability of the code is better.
+<br/>
+The logo must be in svg format. Use absolute path.
+<br/>
+Try all of types of QR style and use what you like.
+<br/>
+```
 $options = [
     'color'    => '#121212',
     'type'     => 'rect', # cgibrid, circle, rect
@@ -42,16 +47,10 @@ $options = [
     'logo'     => 'logo.svg',
 ];
 ```
-By increasing the capacity, the pixel density increases and the readability of the code is better.
-<br/>
-The logo must be in svg format
-<br/>
-The type of QR style. Try and use what you like.
-<br/>
 
 ### You can use SVG code or SVG file
 
-```http
+```
 echo $svg;
 
 file_put_contents('qr.svg', $svg);
