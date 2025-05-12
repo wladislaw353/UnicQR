@@ -3,121 +3,170 @@
 class UnicQR
 {
 
-    public function generate($data, $options)
+    public function generate($data, array $options): string
     {
         $code = $this->qr_encode($data, $options['capacity']);
-        $svg = '<?xml version="1.0"?>';
-        $svg .= '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="'.$code['size'].'" height="'.$code['size'].'" viewBox="0 0 '.$code['size'].' '.$code['size'].'" fill="'.$options['color'].'">';
-        $svg .= '<defs>';
-        $svg .= '<rect id="rect" width="1" height="1"/>';
-        $svg .= '<path id="circle" d="M0 0.5C0 0.223858 0.223858 0 0.5 0V0C0.776142 0 1 0.223858 1 0.5V0.5C1 0.776142 0.776142 1 0.5 1V1C0.223858 1 0 0.776142 0 0.5V0.5Z"/>';
-        $svg .= '<path id="lt-angle" d="M0 1C0 0.447715 0.447715 0 1 0V0V1H0V1Z"/>';
-        $svg .= '<path id="rt-angle" d="M0 0V0C0.552285 0 1 0.447715 1 1V1H0V0Z"/>';
-        $svg .= '<path id="rb-angle" d="M0 0H1V0C1 0.552285 0.552285 1 0 1V1V0Z"/>';
-        $svg .= '<path id="lb-angle" d="M0 0H1V1V1C0.447715 1 0 0.552285 0 0V0Z"/>';
-        $svg .= '<path id="t-angle" d="M0 0.5C0 0.223858 0.223858 0 0.5 0V0C0.776142 0 1 0.223858 1 0.5V1H0V0.5Z"/>';
-        $svg .= '<path id="r-angle" d="M0 0H0.5C0.776142 0 1 0.223858 1 0.5V0.5C1 0.776142 0.776142 1 0.5 1H0V0Z"/>';
-        $svg .= '<path id="b-angle" d="M0 0H1V0.5C1 0.776142 0.776142 1 0.5 1V1C0.223858 1 0 0.776142 0 0.5V0Z"/>';
-        $svg .= '<path id="l-angle" d="M0 0.5C0 0.223858 0.223858 0 0.5 0H1V1H0.5C0.223858 1 0 0.776142 0 0.5V0.5Z"/>';
-        $svg .= '</defs>';
+        $svg  = '<?xml version="1.0"?>';
+        $svg .= '<svg xmlns="http://www.w3.org/2000/svg" version="1.1"'
+            . ' width="' . $code['size'] . '"'
+            . ' height="' . $code['size'] . '"'
+            . ' viewBox="0 0 ' . $code['size'] . ' ' . $code['size'] . '"'
+            . ' fill="' . $options['color'] . '">';
         $svg .= $this->render_svg($code, $options);
         $svg .= '</svg>';
+
         return $svg;
     }
-    private function render_svg($code, $options)
+
+    private function render_svg(array $code, array $options): string
     {
-        $svg = '';
-        
-        if ($options['logo']) {
-            $logoSize = (int) ($code['size'] / 5);
-            $logoPosition = (int) ($code['size'] - $logoSize) / 2;
-            for ($lx=$logoPosition; $lx < $logoPosition+$logoSize; $lx++) { 
-                for ($ly=$logoPosition; $ly < $logoPosition+$logoSize; $ly++) {
+        $defs = [
+            'circle'   => 'M0 0.5C0 0.223858 0.223858 0 0.5 0V0C0.776142 0 1 0.223858 1 0.5V0.5C1 0.776142 0.776142 1 0.5 1V1C0.223858 1 0 0.776142 0 0.5V0.5Z',
+            'lt-angle' => 'M0 1C0 0.447715 0.447715 0 1 0V0V1H0V1Z',
+            'rt-angle' => 'M0 0V0C0.552285 0 1 0.447715 1 1V1H0V0Z',
+            'rb-angle' => 'M0 0H1V0C1 0.552285 0.552285 1 0 1V1V0Z',
+            'lb-angle' => 'M0 0H1V1V1C0.447715 1 0 0.552285 0 0V0Z',
+            't-angle'  => 'M0 0.5C0 0.223858 0.223858 0 0.5 0V0C0.776142 0 1 0.223858 1 0.5V1H0V0.5Z',
+            'r-angle'  => 'M0 0H0.5C0.776142 0 1 0.223858 1 0.5V0.5C1 0.776142 0.776142 1 0.5 1H0V0Z',
+            'b-angle'  => 'M0 0H1V0.5C1 0.776142 0.776142 1 0.5 1V1C0.223858 1 0 0.776142 0 0.5V0Z',
+            'l-angle'  => 'M0 0.5C0 0.223858 0.223858 0 0.5 0H1V1H0.5C0.223858 1 0 0.776142 0 0.5V0.5Z',
+        ];
+
+        if (!empty($options['logo'])) {
+            $logoSize     = (int) ($code['size'] / 5);
+            $logoPosition = (int) (($code['size'] - $logoSize) / 2);
+
+            for ($lx = $logoPosition; $lx < $logoPosition + $logoSize; $lx++) {
+                for ($ly = $logoPosition; $ly < $logoPosition + $logoSize; $ly++) {
                     $code['matrix'][$lx][$ly] = 0;
                 }
             }
         }
-        
+
+        $svg  = '<defs>';
+        foreach ($defs as $id => $pathData) {
+            $svg .= '<path id="' . $id . '" d="' . $pathData . '"/>';
+        }
+        $svg .= '</defs>';
+
         foreach ($code['matrix'] as $x => $row) {
             foreach ($row as $y => $col) {
-                if ($col) {
+                if (!$col) {
+                    continue;
+                }
 
-                    if ($options['type'] == 'rect') {
-                        $svg .= '<use href="#rect" x="'.$x.'" y="'.$y.'" />';
+                if ($options['type'] === 'rect') {
+                    $svg .= '<rect x="' . $x . '" y="' . $y . '" width="1" height="1" fill="' . $options['color'] . '"/>';
+                    continue;
+                }
+
+                if ($options['type'] === 'circle') {
+                    $svg .= '<path d="' . $defs['circle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                    continue;
+                }
+
+                // гибридная отрисовка
+                if ($options['type'] === 'cgibrid') {
+                    $n = $code['matrix'];
+                    $has = fn($dx, $dy) => !empty($n[$x + $dx][$y + $dy]);
+
+                    if (!$has(1,0) && !$has(0,1) && !$has(-1,0) && !$has(0,-1)) {
+                        $svg .= '<path d="' . $defs['circle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
                         continue;
                     }
 
-                    if ($options['type'] == 'circle') {
-                        $svg .= '<use href="#circle" x="'.$x.'" y="'.$y.'" />';
+                    if (!$has(0,-1) && !$has(-1,0) && !$has(0,1)) {
+                        $svg .= '<path d="' . $defs['l-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                        continue;
+                    }
+                    if (!$has(-1,0) && !$has(0,1) && !$has(1,0)) {
+                        $svg .= '<path d="' . $defs['b-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                        continue;
+                    }
+                    if (!$has(0,1) && !$has(1,0) && !$has(0,-1)) {
+                        $svg .= '<path d="' . $defs['r-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                        continue;
+                    }
+                    if (!$has(1,0) && !$has(0,-1) && !$has(-1,0)) {
+                        $svg .= '<path d="' . $defs['t-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
                         continue;
                     }
 
-                    if ($options['type'] == 'cgibrid') {
-
-                        // if there are no neighbors on 4 sides
-                        if (!$code['matrix'][$x+1][$y] and !$code['matrix'][$x][$y+1] and !$code['matrix'][$x-1][$y] and !$code['matrix'][$x][$y-1]) {
-                            $svg .= '<use href="#circle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-
-                        // if there are no neighbors from 3 adjacent sides starting from the left
-                        if (($y>=0 and !$code['matrix'][$x][$y-1]) and ($x>=0 and !$code['matrix'][$x-1][$y]) and ($y<=$code['size'] and !$code['matrix'][$x][$y+1])) {
-                            $svg .= '<use href="#l-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-                        // if there are no neighbors from 3 neighboring sides starting from the top
-                        if (($x>=0 and !$code['matrix'][$x-1][$y]) and ($y<=$code['size'] and !$code['matrix'][$x][$y+1]) and ($x<=$code['size'] and !$code['matrix'][$x+1][$y])) {
-                            $svg .= '<use href="#b-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-                        // if there are no neighbors from 3 adjacent sides starting from the right
-                        if (($y<=$code['size'] and !$code['matrix'][$x][$y+1]) and ($x<=$code['size'] and !$code['matrix'][$x+1][$y]) and ($y>=0 and !$code['matrix'][$x][$y-1])) {
-                            $svg .= '<use href="#r-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-                        // if there are no neighbors from 3 adjacent sides starting from the bottom
-                        if (($x<=$code['size'] and !$code['matrix'][$x+1][$y]) and ($y>=0 and !$code['matrix'][$x][$y-1]) and ($x>=0 and !$code['matrix'][$x-1][$y])) {
-                            $svg .= '<use href="#t-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-
-                        // if there are no neighbors from 2 adjacent sides starting from the left
-                        if (($y>=0 and !$code['matrix'][$x][$y-1]) and ($x>=0 and !$code['matrix'][$x-1][$y])) {
-                            $svg .= '<use href="#lt-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-                        // if there are no neighbors from 2 neighboring sides starting from the top
-                        if (($x>=0 and !$code['matrix'][$x-1][$y]) and ($y<=$code['size'] and !$code['matrix'][$x][$y+1])) {
-                            $svg .= '<use href="#lb-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-                        // if there are no neighbors from 2 adjacent sides starting from the right
-                        if (($y<=$code['size'] and !$code['matrix'][$x][$y+1]) and ($x<=$code['size'] and !$code['matrix'][$x+1][$y])) {
-                            $svg .= '<use href="#rb-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-                        // if there are no neighbors from 2 adjacent sides starting from the bottom
-                        if (($x<=$code['size'] and !$code['matrix'][$x+1][$y]) and ($y>=0 and !$code['matrix'][$x][$y-1])) {
-                            $svg .= '<use href="#rt-angle" x="'.$x.'" y="'.$y.'" />';
-                            continue;
-                        }
-
-                        // if all 4 neighbors
-                        $svg .= '<use href="#rect" x="'.$x.'" y="'.$y.'" />';
+                    if (!$has(0,-1) && !$has(-1,0)) {
+                        $svg .= '<path d="' . $defs['lt-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
                         continue;
-
                     }
+                    if (!$has(-1,0) && !$has(0,1)) {
+                        $svg .= '<path d="' . $defs['lb-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                        continue;
+                    }
+                    if (!$has(0,1) && !$has(1,0)) {
+                        $svg .= '<path d="' . $defs['rb-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                        continue;
+                    }
+                    if (!$has(1,0) && !$has(0,-1)) {
+                        $svg .= '<path d="' . $defs['rt-angle'] . '" transform="translate(' . $x . ',' . $y . ')" fill="' . $options['color'] . '"/>';
+                        continue;
+                    }
+
+                    $svg .= '<rect x="' . $x . '" y="' . $y . '" width="1" height="1" fill="' . $options['color'] . '"/>';
+                    continue;
                 }
             }
         }
 
-        if ($options['logo']) {
-            $logoData = 'data:image/svg+xml;utf8,'.\rawurlencode(\str_replace(["\r", "\n"], ' ', \file_get_contents($options['logo'])));
-            $svg .= '<image href="'.$logoData.'" x="'.$logoPosition.'" y="'.$logoPosition.'" height="'.$logoSize.'" width="'.$logoSize.'" />';
+        if (!empty($options['logo'])) {
+            $logoPath     = $options['logo'];
+            $ext          = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+            $logoSize     = (int) ($code['size'] / 5);
+            $logoPosition = (int) (($code['size'] - $logoSize) / 2);
+
+            if ($ext === 'svg') {
+                $logoSvg   = file_get_contents($logoPath);
+                $logoInner = preg_replace(
+                    ['/\<\?xml.*?\?\>/', '/\<\/?svg[^>]*\>/'],
+                    '',
+                    $logoSvg
+                );
+
+                if (preg_match('/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/', $logoSvg, $m)) {
+                    [, $origW, $origH] = $m;
+                } else {
+                    $origW = $origH = $logoSize;
+                }
+
+                $scaleX = $logoSize / $origW;
+                $scaleY = $logoSize / $origH;
+
+                $svg .= '<g transform="translate('
+                    . $logoPosition . ',' . $logoPosition
+                    . ') scale(' . $scaleX . ',' . $scaleY . ')">'
+                    . $logoInner
+                    . '</g>';
+            } else {
+                $raw      = file_get_contents($logoPath);
+                $base64   = base64_encode($raw);
+                $mimeType = match ($ext) {
+                    'png'  => 'image/png',
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'gif'  => 'image/gif',
+                    default => 'application/octet-stream',
+                };
+                $dataUri  = 'data:' . $mimeType . ';base64,' . $base64;
+
+                $svg .= '<image '
+                    . 'xmlns:xlink="http://www.w3.org/1999/xlink" '
+                    . 'xlink:href="' . $dataUri . '" '
+                    . 'x="' . $logoPosition . '" '
+                    . 'y="' . $logoPosition . '" '
+                    . 'width="' . $logoSize . '" '
+                    . 'height="' . $logoSize . '"/>';
+            }
         }
 
         return $svg;
     }
+
 
     private function qr_encode($data, $ecl)
     {
