@@ -6,10 +6,13 @@ class UnicQR
     public function generate($data, array $options): string
     {
         $code = $this->qr_encode($data, $options['capacity']);
+        
+        $pixelSize = isset($options['size']) ? (int)$options['size'] : $code['size'];
+        
         $svg  = '<?xml version="1.0"?>';
         $svg .= '<svg xmlns="http://www.w3.org/2000/svg" version="1.1"'
-            . ' width="' . $code['size'] . '"'
-            . ' height="' . $code['size'] . '"'
+            . ' width="' . $pixelSize . '"'
+            . ' height="' . $pixelSize . '"'
             . ' viewBox="0 0 ' . $code['size'] . ' ' . $code['size'] . '"'
             . ' fill="' . $options['color'] . '">';
         $svg .= $this->render_svg($code, $options);
