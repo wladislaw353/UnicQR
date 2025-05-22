@@ -17,7 +17,8 @@ $data = 'https://example.com/';
 $options = [
     'color'    => '#121212',
     'type'     => 'rect', # cgibrid, circle, rect
-    'capacity' => '3', # 0, 1, 2, 3
+    'capacity' => '3', # 0, 1, 2, 3,
+    'size'     => 250,
     'logo'     => 'logo.svg',
 ];
 
@@ -37,13 +38,16 @@ By increasing the capacity, the pixel density increases and the readability of t
 <br/>
 The logo must be in svg format. Use absolute path.
 <br/>
+Use size to set width & height of svg in px.
+<br/>
 Try all of types of QR style and use what you like.
 <br/>
 ```
 $options = [
     'color'    => '#121212',
     'type'     => 'rect', # cgibrid, circle, rect
-    'capacity' => '3', # 0, 1, 2, 3
+    'capacity' => '3', # 0, 1, 2, 3,
+    'size'     => 250, # width & height in px
     'logo'     => 'logo.svg',
 ];
 ```
