@@ -7,7 +7,8 @@ $data = 'https://example.com/';
 $options = [
     'color'    => '#121212',
     'type'     => 'rect', # cgibrid, circle, rect
-    'capacity' => '3', # 0, 1, 2, 3
+    'capacity' => '3', # 0, 1, 2, 3,
+    'size' => 250 # width & height in px
     // 'logo'     => 'logo.svg',
 ];
 
